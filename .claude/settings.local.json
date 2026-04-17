@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx create-next-app@latest . --typescript --tailwind --app --eslint --no-src-dir --import-alias \"@/*\" --no-git --yes)",
+      "Bash(npx create-next-app@latest veil --typescript --tailwind --app --eslint --no-src-dir --import-alias \"@/*\" --no-git --yes)",
+      "Bash(npm install *)",
+      "Bash(npx tsc *)",
+      "Bash(npm run *)"
+    ],
+    "additionalDirectories": [
+      "d:\\Coding Projects\\Veil\\veil\\app\\weddings\\[id]"
+    ]
+  }
+}
