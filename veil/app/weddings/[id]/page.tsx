@@ -76,7 +76,8 @@ export default async function WeddingDetailPage({
     { href: `/weddings/${id}/timeline`, label: "Timeline" },
     { href: `/weddings/${id}/shot-list`, label: "Shot list" },
     { href: `/weddings/${id}/vendors`, label: "Vendors" },
-    { href: `/weddings/${id}/ai`, label: "AI drafts" },
+    { href: `/weddings/${id}/instagram`, label: "Instagram" },
+    { href: `/weddings/${id}/ai`, label: "AI studio" },
   ];
 
   return (

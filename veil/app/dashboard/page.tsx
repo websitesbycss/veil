@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Kanban } from "@/components/kanban";
+import { Reminders } from "@/components/reminders";
+import { getDueMilestones } from "@/app/actions/milestones";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -25,8 +27,11 @@ export default async function DashboardPage() {
     .eq("photographer_id", photographer!.id)
     .order("wedding_date", { ascending: true });
 
+  const { items: reminderItems } = await getDueMilestones();
+
   return (
     <div className="max-w-7xl mx-auto">
+      <Reminders items={reminderItems} />
       <div className="flex items-center justify-between px-4 pt-6 pb-2">
         <h1 className="text-xl font-semibold text-stone-900">
           Pipeline

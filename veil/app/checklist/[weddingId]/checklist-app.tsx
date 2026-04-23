@@ -11,6 +11,15 @@ type ShotItem = {
   completed_at: string | null;
 };
 
+type Vendor = {
+  id: string;
+  role: string;
+  name: string;
+  phone: string | null;
+  email: string | null;
+  notes: string | null;
+};
+
 type QueuedUpdate = { itemId: string; completed: boolean };
 
 // Persist token per weddingId in sessionStorage
@@ -28,6 +37,8 @@ export function ChecklistApp({ weddingId }: { weddingId: string }) {
   const [token, setToken] = useState<string | null>(null);
   const [shooterName, setShooterName] = useState("");
   const [items, setItems] = useState<ShotItem[]>([]);
+  const [vendors, setVendors] = useState<Vendor[]>([]);
+  const [view, setView] = useState<"shots" | "vendors">("shots");
   const [errorMsg, setErrorMsg] = useState("");
   const [isOnline, setIsOnline] = useState(true);
   const [pendingCount, setPendingCount] = useState(0);
@@ -79,6 +90,21 @@ export function ChecklistApp({ weddingId }: { weddingId: string }) {
       setPhase("checklist");
       // Cache in localStorage for offline use
       localStorage.setItem(`checklist_items_${weddingId}`, JSON.stringify(data.items ?? []));
+
+      // Fetch vendors too (best-effort, non-blocking)
+      fetch(`/api/checklist/vendors?weddingId=${weddingId}`, {
+        headers: { Authorization: `Bearer ${tok}` },
+      })
+        .then((r) => (r.ok ? r.json() : { vendors: [] }))
+        .then((v) => {
+          const vs = (v.vendors ?? []) as Vendor[];
+          setVendors(vs);
+          localStorage.setItem(`checklist_vendors_${weddingId}`, JSON.stringify(vs));
+        })
+        .catch(() => {
+          const cached = localStorage.getItem(`checklist_vendors_${weddingId}`);
+          if (cached) setVendors(JSON.parse(cached));
+        });
     } catch {
       // Try offline cache
       const cached = localStorage.getItem(`checklist_items_${weddingId}`);
@@ -272,9 +298,35 @@ export function ChecklistApp({ weddingId }: { weddingId: string }) {
             style={{ width: items.length > 0 ? `${(completedCount / items.length) * 100}%` : "0%" }}
           />
         </div>
+        {/* View switcher */}
+        <div className="mt-3 flex gap-2">
+          <button
+            type="button"
+            onClick={() => setView("shots")}
+            className={`flex-1 py-2 text-sm font-medium rounded-lg transition-colors ${
+              view === "shots"
+                ? "bg-amber-500 text-stone-900"
+                : "bg-stone-800 text-stone-400"
+            }`}
+          >
+            Shots
+          </button>
+          <button
+            type="button"
+            onClick={() => setView("vendors")}
+            className={`flex-1 py-2 text-sm font-medium rounded-lg transition-colors ${
+              view === "vendors"
+                ? "bg-amber-500 text-stone-900"
+                : "bg-stone-800 text-stone-400"
+            }`}
+          >
+            Vendors {vendors.length > 0 && `(${vendors.length})`}
+          </button>
+        </div>
       </div>
 
       {/* Items */}
+      {view === "shots" && (
       <div className="flex-1 overflow-y-auto">
         {items.length === 0 && (
           <div className="flex items-center justify-center h-48 text-stone-500 text-sm">
@@ -315,9 +367,49 @@ export function ChecklistApp({ weddingId }: { weddingId: string }) {
           </button>
         ))}
       </div>
+      )}
+
+      {view === "vendors" && (
+        <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+          {vendors.length === 0 && (
+            <div className="flex items-center justify-center h-48 text-stone-500 text-sm">
+              No vendors listed.
+            </div>
+          )}
+          {vendors.map((v) => (
+            <div key={v.id} className="bg-stone-800 rounded-xl p-4">
+              <p className="text-xs text-stone-500 uppercase tracking-wide mb-1">
+                {v.role}
+              </p>
+              <p className="text-white font-medium">{v.name}</p>
+              <div className="flex flex-wrap gap-3 mt-2">
+                {v.phone && (
+                  <a
+                    href={`tel:${v.phone}`}
+                    className="text-amber-400 text-sm underline"
+                  >
+                    {v.phone}
+                  </a>
+                )}
+                {v.email && (
+                  <a
+                    href={`mailto:${v.email}`}
+                    className="text-amber-400 text-sm underline"
+                  >
+                    {v.email}
+                  </a>
+                )}
+              </div>
+              {v.notes && (
+                <p className="text-stone-400 text-sm mt-2">{v.notes}</p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Completion banner */}
-      {items.length > 0 && completedCount === items.length && (
+      {view === "shots" && items.length > 0 && completedCount === items.length && (
         <div className="sticky bottom-0 bg-amber-500 text-stone-900 text-center py-4 font-semibold">
           All shots complete!
         </div>

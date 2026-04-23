@@ -281,5 +281,26 @@ export async function createWedding(formData: FormData) {
     await supabase.from("family_members").insert(familyInserts);
   }
 
+  if (wd.wedding_date) {
+    const base = new Date(wd.wedding_date + "T00:00:00");
+    const milestoneRows = (
+      [
+        { years: 1, type: "anniversary_1yr" as const },
+        { years: 5, type: "anniversary_5yr" as const },
+        { years: 10, type: "anniversary_10yr" as const },
+      ]
+    ).map(({ years, type }) => {
+      const d = new Date(base);
+      d.setFullYear(d.getFullYear() + years);
+      return {
+        wedding_id: wedding.id,
+        milestone_type: type,
+        trigger_date: d.toISOString().slice(0, 10),
+        notified: false,
+      };
+    });
+    await supabase.from("milestones").insert(milestoneRows);
+  }
+
   redirect(`/weddings/${wedding.id}`);
 }

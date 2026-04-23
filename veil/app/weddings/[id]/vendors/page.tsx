@@ -1,17 +1,9 @@
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Nav } from "@/components/nav";
-import { AiTabs } from "./tabs";
+import { VendorManager } from "./vendor-form";
 
-type AiDraft = {
-  id: string;
-  draft_type: string;
-  content: string;
-  status: string;
-  created_at: string;
-};
-
-export default async function AiDraftsPage({
+export default async function VendorsPage({
   params,
 }: {
   params: Promise<{ id: string }>;
@@ -37,44 +29,36 @@ export default async function AiDraftsPage({
 
   const { data: wedding } = await supabase
     .from("weddings")
-    .select("id, venue_name, wedding_date")
+    .select("id")
     .eq("id", id)
     .eq("photographer_id", photographer.id)
     .single();
   if (!wedding) notFound();
 
-  const { data: drafts } = await supabase
-    .from("ai_drafts")
-    .select("id, draft_type, content, status, created_at")
+  const { data: vendors } = await supabase
+    .from("vendors")
+    .select("id, role, name, phone, email, notes")
     .eq("wedding_id", id)
-    .in("draft_type", ["email", "quote", "blog_post"])
-    .order("created_at", { ascending: false });
-
-  const allDrafts = (drafts ?? []) as AiDraft[];
-  const emailDrafts = allDrafts.filter((d) => d.draft_type === "email");
-  const quoteDrafts = allDrafts.filter((d) => d.draft_type === "quote");
-  const blogDrafts = allDrafts.filter((d) => d.draft_type === "blog_post");
+    .order("role", { ascending: true });
 
   return (
     <div className="flex flex-col min-h-screen">
       <Nav studioName={photographer.studio_name} />
       <main className="max-w-4xl mx-auto px-4 py-8 w-full">
         <div className="mb-6">
-          <a href={`/weddings/${id}`} className="text-xs text-stone-400 hover:text-stone-600 mb-1 block">
+          <a
+            href={`/weddings/${id}`}
+            className="text-xs text-stone-400 hover:text-stone-600 mb-1 block"
+          >
             ← Wedding
           </a>
-          <h1 className="text-2xl font-semibold text-stone-900">AI Studio</h1>
+          <h1 className="text-2xl font-semibold text-stone-900">Vendors</h1>
           <p className="text-sm text-stone-500 mt-0.5">
-            Draft emails in your voice. Build itemized quotes. Review before sending.
+            Contact info for the day-of vendor team. Visible to your second shooter.
           </p>
         </div>
 
-        <AiTabs
-          weddingId={id}
-          emailDrafts={emailDrafts}
-          quoteDrafts={quoteDrafts}
-          blogDrafts={blogDrafts}
-        />
+        <VendorManager weddingId={id} vendors={vendors ?? []} />
       </main>
     </div>
   );
