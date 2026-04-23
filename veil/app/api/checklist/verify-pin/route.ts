@@ -57,7 +57,9 @@ export async function POST(request: Request) {
   }
 
   // Issue a short-lived JWT (1 day)
-  const secret = new TextEncoder().encode(process.env.CHECKLIST_JWT_SECRET ?? process.env.ENCRYPTION_KEY ?? "dev-secret-change-me");
+  const rawSecret = process.env.CHECKLIST_JWT_SECRET ?? process.env.ENCRYPTION_KEY;
+  if (!rawSecret) throw new Error("CHECKLIST_JWT_SECRET is not set");
+  const secret = new TextEncoder().encode(rawSecret);
   const token = await new SignJWT({
     sub: matchedShooter.id,
     weddingId,

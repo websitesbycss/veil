@@ -4,9 +4,9 @@ import { createClient as createServiceClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/types";
 
 function getSecret() {
-  return new TextEncoder().encode(
-    process.env.CHECKLIST_JWT_SECRET ?? process.env.ENCRYPTION_KEY ?? "dev-secret-change-me"
-  );
+  const secret = process.env.CHECKLIST_JWT_SECRET ?? process.env.ENCRYPTION_KEY;
+  if (!secret) throw new Error("CHECKLIST_JWT_SECRET is not set");
+  return new TextEncoder().encode(secret);
 }
 
 async function verifyToken(request: Request, weddingId: string) {
